@@ -22,6 +22,15 @@ logger.info("Hello!");
 logger.warn("Hello!");
 logger.debug("Hello!");
 logger.error("Hello!");
+
+module.exports = logger
+```
+
+and then you can use logger from any other class by requiring the previous file.
+```js
+const logger = require("./logger.js");
+
+logger.info("Hey from another file!");
 ```
 
 ## Contributing
