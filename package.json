@@ -1,0 +1,27 @@
+{
+  "name": "@lielamar/logger",
+  "version": "1.0.1",
+  "description": "A simple logger library",
+  "scripts": {
+    "build": "tsc --build",
+    "clean": "tsc --build --clean",
+    "dev": "nodemon src/logger_test.ts --watch ./src"
+  },
+  "keywords": [
+    "startup",
+    "logger",
+    "library"
+  ],
+  "author": "Liel Amar",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^14.14.37",
+    "@types/nodemon": "^1.19.0",
+    "nodemon": "^2.0.7"
+  },
+  "dependencies": {
+    "compressing": "^1.5.1"
+  },
+  "main": "dist/logger.js",
+  "types": "dist/logger.d.ts"
+}
