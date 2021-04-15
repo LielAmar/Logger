@@ -75,7 +75,7 @@ export default class Logger {
   }
 
   private async loadFiles(date: Date) {
-    this.currentDay = date.getDay();
+    this.currentDay = date.getMinutes();
 
     const logDir = path.join(date.getFullYear().toString(), parseMonth(date.getMonth()));
     const logName = beautifyNumber(date.getDay()) + "-" + beautifyNumber(date.getHours()) + "_" + beautifyNumber(date.getMinutes()) + ".log";
@@ -96,38 +96,42 @@ export default class Logger {
     this.logFiles.set(LogType.ERROR, { filePath: errorPath, fileName: logName, writeStream: fs.createWriteStream(path.join(errorPath, logName), { flags: "w" }) });
   }
 
-  private async compressFile(type: LogType) {
-    let file = this.logFiles.get(type);
+  private async compressFile(type: LogType): Promise<LogFile> {
+    return new Promise(async (resolve, reject) => {
+      let file = this.logFiles.get(type);
 
-    if(file) {
-      compressing.gzip.compressFile(path.join(file.filePath, file.fileName), path.join(file.filePath, file.fileName + ".gz"))
-        .then(() => {
-          if(file) {
-            fs.unlink(path.join(file?.filePath, file?.fileName), (err) => {
-              if(err)
-                throw err;
-            });
-          }
-        })
-        .catch(error => {
-          console.error(`Couldn't compress file ` + file?.filePath + "/" + file?.fileName, error);
-        })
-    }
+      if(file) {
+        try {
+          await compressing.gzip.compressFile(path.join(file.filePath, file.fileName), path.join(file.filePath, file.fileName + ".gz"));
+  
+          file.writeStream.end();
+          fs.unlink(path.join(file?.filePath, file?.fileName), (err) => { if(err) throw err; });
+
+          return resolve(file);
+        } catch(exception) {
+          return reject(exception)
+        }
+      }
+    });
   }
 
   private async compressFiles() {
-    await this.compressFile(LogType.INFO);
-    await this.compressFile(LogType.WARN);
-    await this.compressFile(LogType.DEBUG);
-    await this.compressFile(LogType.ERROR);
+    try {
+      await this.compressFile(LogType.INFO);
+      await this.compressFile(LogType.WARN);
+      await this.compressFile(LogType.DEBUG);
+      await this.compressFile(LogType.ERROR);
+    } catch(exception) {
+      throw exception;
+    }
   }
 
   private async reloadFiles() {
     const newDate = new Date();
 
-    if(newDate.getDay() !== this.currentDay) {
-      this.compressFiles();
-      this.loadFiles(newDate);
+    if(newDate.getMinutes() !== this.currentDay) {
+      await this.compressFiles();
+      await this.loadFiles(newDate);
     }
   }
 
@@ -148,7 +152,7 @@ export default class Logger {
         file.writeStream.write(templated + `\n`);
     }
 
-    this.reloadFiles();
+    await this.reloadFiles();
   }
 
   /**
@@ -161,10 +165,10 @@ export default class Logger {
     const templated = this.assembleTemplate(LogType.INFO, message);
 
     if(this.settings.logToConsole)
-      this.logToConsole(console.info, templated, object);
+      await this.logToConsole(console.info, templated, object);
   
     if(this.settings.logToFiles)
-      this.logToFile(LogType.INFO, templated, object);
+      await this.logToFile(LogType.INFO, templated, object);
   }
 
   /**
@@ -177,10 +181,10 @@ export default class Logger {
     const templated = this.assembleTemplate(LogType.WARN, message);
 
     if(this.settings.logToConsole)
-      this.logToConsole(console.warn, templated, object);
+      await this.logToConsole(console.warn, templated, object);
   
     if(this.settings.logToFiles)
-      this.logToFile(LogType.WARN, templated, object);
+      await this.logToFile(LogType.WARN, templated, object);
   }
 
   /**
@@ -193,10 +197,10 @@ export default class Logger {
     const templated = this.assembleTemplate(LogType.DEBUG, message);
 
     if(this.settings.logToConsole)
-      this.logToConsole(console.debug, templated, object);
+      await this.logToConsole(console.debug, templated, object);
   
     if(this.settings.logToFiles)
-      this.logToFile(LogType.DEBUG, templated, object);
+      await this.logToFile(LogType.DEBUG, templated, object);
   }
 
   /**
@@ -209,9 +213,9 @@ export default class Logger {
     const templated = this.assembleTemplate(LogType.ERROR, message);
 
     if(this.settings.logToConsole)
-      this.logToConsole(console.error, templated, object);
+      await this.logToConsole(console.error, templated, object);
   
     if(this.settings.logToFiles)
-      this.logToFile(LogType.ERROR, templated, object);
+      await this.logToFile(LogType.ERROR, templated, object);
   }
 }
