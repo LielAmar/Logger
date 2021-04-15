@@ -3,8 +3,9 @@ import path from "path";
 import compressing from "compressing";
 
 interface LoggerSettings {
-  consoleLog?: boolean,
-  includeObjects?: boolean
+  logToFiles?: boolean,
+  logToConsole?: boolean,
+  logObjects?: boolean
 }
 
 enum LogType {
@@ -50,7 +51,7 @@ export default class Logger {
   private logsPath: string;
 
   private template: string = "[%date%] [%type%] [%namespace%] [%message%]";
-  private settings: LoggerSettings = { consoleLog: true, includeObjects: true };
+  private settings: LoggerSettings = { logToFiles: true, logToConsole: true, logObjects: true };
 
   private currentDay: number = 0;
   private logFiles = new Map<LogType, LogFile>();
@@ -101,12 +102,12 @@ export default class Logger {
     if(file) {
       compressing.gzip.compressFile(path.join(file.filePath, file.fileName), path.join(file.filePath, file.fileName + ".gz"))
         .then(() => {
-          // if(file) {
-          //   fs.unlink(path.join(file?.filePath, file?.fileName), (err) => {
-          //     if(err)
-          //       throw err;
-          //   });
-          // }
+          if(file) {
+            fs.unlink(path.join(file?.filePath, file?.fileName), (err) => {
+              if(err)
+                throw err;
+            });
+          }
         })
         .catch(error => {
           console.error(`Couldn't compress file ` + file?.filePath + "/" + file?.fileName, error);
@@ -131,7 +132,7 @@ export default class Logger {
   }
 
   private async logToConsole(func: (...data: any[]) => void, templated: string, object?: object) {
-    if(this.settings.includeObjects && object)
+    if(this.settings.logObjects && object)
       return func(templated, object);
 
     return func(templated);
@@ -141,7 +142,7 @@ export default class Logger {
     const file = this.logFiles.get(type);
 
     if(file) {
-      if(this.settings.includeObjects && object)
+      if(this.settings.logObjects && object)
         file.writeStream.write(templated + `[${JSON.stringify(object)}]\n`);
       else
         file.writeStream.write(templated + `\n`);
@@ -159,10 +160,11 @@ export default class Logger {
   public async info(message: string, object?: object | undefined) {
     const templated = this.assembleTemplate(LogType.INFO, message);
 
-    if(this.settings.consoleLog)
+    if(this.settings.logToConsole)
       this.logToConsole(console.info, templated, object);
   
-    this.logToFile(LogType.INFO, templated, object);
+    if(this.settings.logToFiles)
+      this.logToFile(LogType.INFO, templated, object);
   }
 
   /**
@@ -174,10 +176,11 @@ export default class Logger {
   public async warn(message: string, object?: object | undefined) {
     const templated = this.assembleTemplate(LogType.WARN, message);
 
-    if(this.settings.consoleLog)
+    if(this.settings.logToConsole)
       this.logToConsole(console.warn, templated, object);
   
-    this.logToFile(LogType.WARN, templated, object);
+    if(this.settings.logToFiles)
+      this.logToFile(LogType.WARN, templated, object);
   }
 
   /**
@@ -189,10 +192,11 @@ export default class Logger {
   public async debug(message: string, object?: object | undefined) {
     const templated = this.assembleTemplate(LogType.DEBUG, message);
 
-    if(this.settings.consoleLog)
+    if(this.settings.logToConsole)
       this.logToConsole(console.debug, templated, object);
   
-    this.logToFile(LogType.DEBUG, templated, object);
+    if(this.settings.logToFiles)
+      this.logToFile(LogType.DEBUG, templated, object);
   }
 
   /**
@@ -204,9 +208,10 @@ export default class Logger {
   public async error(message: string, object?: object | undefined) {
     const templated = this.assembleTemplate(LogType.ERROR, message);
 
-    if(this.settings.consoleLog)
+    if(this.settings.logToConsole)
       this.logToConsole(console.error, templated, object);
   
-    this.logToFile(LogType.ERROR, templated, object);
+    if(this.settings.logToFiles)
+      this.logToFile(LogType.ERROR, templated, object);
   }
 }

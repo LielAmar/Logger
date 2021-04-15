@@ -1,6 +1,6 @@
 {
   "name": "@lielamar/logger",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A simple logger library",
   "scripts": {
     "build": "tsc --build",
