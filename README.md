@@ -1,5 +1,7 @@
 # Logger
 
+[![Discord](https://img.shields.io/discord/416652224505184276?color=%235865F2&label=Join%20My%20Discord)](https://discord.gg/NzgBrqR)
+
 A simple Logger for NodeJS written in TypeScript
 
 ## Instalation
