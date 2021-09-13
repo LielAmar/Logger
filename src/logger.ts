@@ -2,12 +2,6 @@ import fs, { WriteStream } from "fs";
 import path from "path";
 import compressing from "compressing";
 
-interface LoggerSettings {
-  logToFiles?: boolean,
-  logToConsole?: boolean,
-  logObjects?: boolean
-}
-
 enum LogType {
   INFO,
   WARN,
@@ -15,9 +9,15 @@ enum LogType {
   ERROR
 }
 
+interface LoggerSettings {
+  logToFiles?: boolean
+  logToConsole?: boolean
+  logObjects?: boolean
+}
+
 interface LogFile {
-  filePath: string,
-  fileName: string,
+  filePath: string
+  fileName: string
   writeStream: WriteStream
 }
 
